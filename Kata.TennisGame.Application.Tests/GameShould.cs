@@ -1,3 +1,6 @@
+
+
+
 namespace Kata.TennisGame.Application.Tests;
 
 public class GameShould
@@ -59,53 +62,236 @@ public class GameShould
 
 
     }
+
+    [Fact]
+    public void StartWithNoScores()
+    {
+        var game = new Game();
+
+        Assert.Equal(0, game.Score.Team1.Points);
+        Assert.Equal(0, game.Score.Team1.Game);
+        Assert.Equal(0, game.Score.Team1.Set);
+        Assert.False(game.Score.Team1.MatchWon);
+
+        Assert.Equal(0, game.Score.Team2.Points);
+        Assert.Equal(0, game.Score.Team2.Game);
+        Assert.Equal(0, game.Score.Team2.Set);
+        Assert.False(game.Score.Team2.MatchWon);
+
+
+
+    }
+
+    [Fact]
+    public void StartWithNotStartedStatus()
+    {
+        var game = new Game();
+
+        Assert.Equal(GameStatus.NotStarted, game.Status);
+
+
+
+    }
+
+    [Fact]
+    public void BeAbleToStartHavingTwoPlayersAtMinimum()
+    {
+        var game = new Game();
+
+        var team1 = Team.CreateSinglesTeam("single Team 1", Player.Create("player 1"));
+        var team2 = Team.CreateSinglesTeam("single Team 2", Player.Create("player 2"));
+
+        game.AddTeams(team1, team2);
+
+
+        game.Start();
+
+        Assert.Equal(GameStatus.Started, game.Status);
+
+
+    }
+    [Fact]
+    public void BeAbleToStartHavingFourPlayersAtMaximum()
+    {
+        var game = new Game();
+        Assert.True(false);
+
+    }
+    [Fact]
+    public void NotBeAbleToAddTwoTeamsWithSameName()
+    {
+        var game = new Game();
+        Assert.True(false);
+
+    }
+    //Teams tests
+    //[Fact]
+    //public void NotBeAbleToCreateDoublesWithOnlyOnePlayer()
+    //{
+    //    var team = new Team();
+    //    Assert.True(false);
+
+    //}
+    //[Fact]
+    //public void NotBeAbleToCreateSinglesWithNoPlayer()
+    //{
+    //    var team = new Team();
+    //    Assert.True(false);
+
+    //}
+    //[Fact]
+    //public void NotBeAbleToAddTwoPlayersWithSameName()
+    //{
+    //    var team = new Team();
+    //    Assert.True(false);
+
+    //}
 }
 
 internal class Game
 {
-    public Team Team1 { get; }
-    public Team Team2 { get; }
+    //note: verify what info i should be disclosing of the teams, i don't wanna disclose it all
+    public ITeam Team1 { get; private set; }
+    public ITeam Team2 { get; private set; }
+    public Score Score { get; }
+    public GameStatus Status { get; private set; }
+
     public Game()
     {
-        Team1 = new NoTeam();
-        Team2 = new NoTeam();
+        Status = GameStatus.NotStarted;
+        Team1 = Team.CreateEmptyTeam();
+        Team2 = Team.CreateEmptyTeam();
+        Score = new Score();
     }
 
+    public void AddTeams(ITeam team1, ITeam team2)
+    {
+        Team1 = team1;
+        Team2 = team2;
+    }
+
+    internal void Start()
+    {
+        Status = GameStatus.Started;
+    }
 }
-internal class NoTeam : Team
+
+public enum GameStatus
 {
-    public NoTeam() : base("unknown")
+    NotStarted,
+    Started,
+    Finished
+}
+
+internal class Score
+{
+    public TeamScore Team1 { get; }
+    public TeamScore Team2 { get; }
+    public Score()
+    {
+        Team1 = new TeamScore();
+        Team2 = new TeamScore();
+    }
+}
+
+internal class TeamScore
+{
+    public int Points { get; }
+    public int Game { get; }
+    public int Set { get; }
+    public bool MatchWon { get; }
+    public TeamScore()
+    {
+        Points = 0;
+        Game = 0;
+        Set = 0;
+        MatchWon = false;
+
+    }
+}
+
+internal class NoTeam : ITeam
+{
+    public NoTeam()
     {
     }
+
+    public string Name => "unknown";
+
+    public IPlayer Player1 => new NoPlayer();
+    public IPlayer Player2 => new NoPlayer();
 }
 
-internal class Team
+internal interface ITeam
 {
-    public Player Player1 { get; }
-    public Player Player2 { get; }
+    string Name { get; }
+    IPlayer Player1 { get; }
+    IPlayer Player2 { get; }
+
+}
+
+internal class Team : ITeam
+{
+    public IPlayer Player1 { get; }
+    public IPlayer Player2 { get; }
     public string Name { get; }
 
-    public Team(string name)
+    public static ITeam CreateSinglesTeam(string teamName, IPlayer player)
+    {
+
+        return new Team(teamName, player, new NoPlayer());
+    }
+    public static ITeam CreateDoublesTeam(string teamName, IPlayer player1, IPlayer player2)
+    {
+
+        return new Team(teamName, player1, player2);
+    }
+    public static ITeam CreateEmptyTeam()
+    {
+
+        return new NoTeam();
+    }
+
+    private Team(string name, IPlayer player1, IPlayer player2)
     {
         Name = name;
-        Player1 = new NoPlayer();
-        Player2 = new NoPlayer();
+        Player1 = player1;
+        Player2 = player2;
     }
 }
 
-public class NoPlayer : Player
+public class NoPlayer : IPlayer
 {
 
-    public NoPlayer() : base("unknown")
+    public NoPlayer()
     {
 
     }
+
+    public string Name => "unknown";
+
+
 }
 
-public class Player
+public interface IPlayer
 {
-    public Player(string name)
+    string Name { get; }
+
+}
+
+public class Player : IPlayer
+{
+    public static IPlayer Create(string name)
     {
+        return new Player(name);
+    }
+    public static IPlayer CreateEmpty()
+    {
+        return new NoPlayer();
+    }
+    private Player(string name)
+    {
+
         Name = name;
     }
 
