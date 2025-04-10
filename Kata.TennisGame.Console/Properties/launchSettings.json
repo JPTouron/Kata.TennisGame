@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "Kata.TennisGame.Console": {
+      "commandName": "Project"
+    },
+    "Container (Dockerfile)": {
+      "commandName": "Docker"
+    }
+  }
+}
