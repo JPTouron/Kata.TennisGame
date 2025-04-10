@@ -22,6 +22,7 @@ public class NoTeam : ITeam
     public IPlayer Player2 => new NoPlayer();
 }
 
+//pensar un decorador para cambiar lo que seria un single team (solo una prop de player), de un double team (2 props, una agregada por el decorator, pal player 2)
 public class Team : ITeam
 {
 

@@ -62,7 +62,41 @@ public class Game : IGame
 
         Team1 = team1;
         Team2 = team2;
+
+
+        var xxx = new List<IPlayer> { team1.Player1, team1.Player2 }.Where(x => x is Player);
+        SubscribeEventsForTeam(xxx, OnBallHitSuccessfulTeam1);
+
+        xxx = new List<IPlayer> { team2.Player1, team2.Player2 }.Where(x => x is Player);
+        SubscribeEventsForTeam(xxx, OnBallHitSuccessfulTeam2);
+
     }
+    IReadOnlyCollection<IPlayer> subscribedPlayersEvents;
+    private void SubscribeEventsForTeam(IEnumerable<IPlayer> players, EventHandler onBallHitSuccessfulTeam)
+    {
+        foreach (var player in players)
+            player.BallHitSuccessful += onBallHitSuccessfulTeam;
+    }
+
+    private void OnBallHitSuccessfulTeam1(object? sender, EventArgs e)
+    {
+        Score.ScorePoint(TeamId.Team1);
+    }
+    private void OnBallHitSuccessfulTeam2(object? sender, EventArgs e)
+    {
+        Score.ScorePoint(TeamId.Team2);
+
+    }
+
+    private void Cleanup()
+    {
+        foreach (var player in subscribedPlayersEvents)
+        {
+            player.BallHitSuccessful -= OnBallHitSuccessfulTeam1;
+            player.BallHitSuccessful -= OnBallHitSuccessfulTeam2;
+        }
+    }
+    public void Finish() { Cleanup(); }
 
     public void Start()
     {
