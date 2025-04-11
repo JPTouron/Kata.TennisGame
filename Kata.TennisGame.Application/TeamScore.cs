@@ -2,6 +2,7 @@
 
 
 
+
 namespace Kata.TennisGame.Application;
 
 public enum TeamId
@@ -25,7 +26,7 @@ public interface ITeamScore
     bool MatchWon { get; }
 
 
-    int SetWon { get; }
+    int SetsWon { get; }
     int GamesWon { get; }
 }
 
@@ -67,6 +68,7 @@ public class Score : IScore
 
     public void ScorePoint(TeamId teamId)
     {
+        //refactor this, state machine or whatever
         switch (teamId)
         {
             case TeamId.Team1:
@@ -99,6 +101,16 @@ public class Score : IScore
             team2.ResetScore();
         }
 
+        if (team1.GamesWon >= 6 && team1.GamesWon - team2.GamesWon >= 2)
+        {
+            team1.ScoreSet();
+
+        }
+        else if (team2.GamesWon >= 6 && team2.GamesWon - team1.GamesWon >= 2)
+        {
+            team2.ScoreSet();
+        }
+
     }
 
     private class TeamScore : ITeamScore
@@ -107,7 +119,7 @@ public class Score : IScore
         {
             CurrentGamePoints = 0;
             GamesWon = 0;
-            SetWon = 0;
+            SetsWon = 0;
             MatchWon = false;
         }
 
@@ -115,7 +127,7 @@ public class Score : IScore
 
         public int CurrentGamePoints { get; private set; }
 
-        public int SetWon { get; private set; }
+        public int SetsWon { get; private set; }
 
         public bool MatchWon { get; private set; }
 
@@ -126,5 +138,6 @@ public class Score : IScore
 
         internal void ScorePoint() => CurrentGamePoints++;
 
+        internal void ScoreSet() => SetsWon++;
     }
 }

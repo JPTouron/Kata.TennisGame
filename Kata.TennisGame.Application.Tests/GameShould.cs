@@ -9,20 +9,20 @@ public class GameShould
         * have up to 2 teams -- DONE
             * each team can have either 1 or 2 players -- DONE
 
-        * keep track of history of scores -- initiated
+        * keep track of history of scores -- IN PROGRESS
         * scoring: Game, set, match
             * Game:
                 * love, 15, 30, 40, advantage
-                * A game is won by the first player to have won at least four points in total and at least two points more than the opponent
-                * deuce happens when: If at least three points have been scored by each player, making the player's scores equal at 40 apiece
-                * advantage when:  If at least three points have been scored by each side and a player has one more point than his opponent, the score of the game is "advantage" for the player in the lead
+                * A game is won by the first player to have won at least four points in total and at least two points more than the opponent -- DONE
+                * deuce happens when: If at least three points have been scored by each player, making the player's scores equal at 40 apiece -- DONE
+                * advantage when:  If at least three points have been scored by each side and a player has one more point than his opponent, the score of the game is "advantage" for the player in the lead -- DONE
                 * serving player score is called first, then the non-serving player
                 * after every odd-numbered Game, the server changes
                     * within a team, the server is alternated between the team members
 
             * Set:
-                * it is a series of Games
-                * a Set is won when one team wins at least 6 Games AND 2 Games more than the opponent, if 6-5 then another Game is played
+                * it is a series of Games -- DONE
+                * a Set is won when one team wins at least 6 Games AND 2 Games more than the opponent, if 6-5 then another Game is played -- DONE
                 * The final score in sets is always read with the winning player's score first, e.g. "6–2, 4–6, 6–0, 7–5"
                 * if a Set reaches a 6-6 Games won by each team then a TieBreak Game is in play
                 * TieBreak:
@@ -66,12 +66,12 @@ public class GameShould
 
             Assert.Equal(0, game.Score.Team1.CurrentGamePoints);
             Assert.Equal(0, game.Score.Team1.GamesWon);
-            Assert.Equal(0, game.Score.Team1.SetWon);
+            Assert.Equal(0, game.Score.Team1.SetsWon);
             Assert.False(game.Score.Team1.MatchWon);
 
             Assert.Equal(0, game.Score.Team2.CurrentGamePoints);
             Assert.Equal(0, game.Score.Team2.GamesWon);
-            Assert.Equal(0, game.Score.Team2.SetWon);
+            Assert.Equal(0, game.Score.Team2.SetsWon);
             Assert.False(game.Score.Team2.MatchWon);
         }
 
@@ -373,17 +373,75 @@ public class GameShould
             Assert.Equal(1, game.Score.Team1.GamesWon);
             Assert.Equal(0, game.Score.Team2.GamesWon);
 
-            Assert.Equal(0, game.Score.Team1.SetWon);
-            Assert.Equal(0, game.Score.Team2.SetWon);
+            Assert.Equal(0, game.Score.Team1.SetsWon);
+            Assert.Equal(0, game.Score.Team2.SetsWon);
 
             Assert.False(game.Score.Team1.MatchWon);
             Assert.False(game.Score.Team2.MatchWon);
         }
 
-        [Fact]
-        public void RecordWonGameOnlyWhenPlayerHasTwoMorePointsThanOpponent()
+        [Theory]
+        [InlineData(0, 0, false)]
+        [InlineData(1, 0, false)]
+        [InlineData(2, 0, false)]
+        [InlineData(3, 0, false)]
+        [InlineData(4, 0, false)]
+        [InlineData(5, 0, false)]
+        [InlineData(6, 0, true)]
+        [InlineData(1, 1, false)]
+        [InlineData(2, 1, false)]
+        [InlineData(3, 1, false)]
+        [InlineData(4, 1, false)]
+        [InlineData(5, 1, false)]
+        [InlineData(6, 1, true)]
+        [InlineData(6, 2, true)]
+        [InlineData(6, 3, true)]
+        [InlineData(6, 4, true)]
+        [InlineData(6, 5, false)]
+        [InlineData(6, 6, false)]
+        [InlineData(7, 5, true)]
+        public void RecordSetWonWhenPlayerWinsFourGamesAndTwoMoreThanOpponent(int team1GamesWon, int team2GamesWon, bool expectedSetsWonByTeam1)
         {
-            Assert.False(true);
+            var game = Game.CreateGame();
+
+            var team1 = TeamProvider.Singles.CreateValidTeam_1_WithValidPlayer();
+
+            var team2 = TeamProvider.Singles.CreateValidTeam_2_WithValidPlayer();
+
+            game.AddTeams(team1, team2);
+
+            var player1 = team1.Player1;
+            var player2 = team2.Player1;
+
+            var team1GameToWin = 0;
+            var team2GameToWin = 0;
+            while (team1GameToWin <= team1GamesWon || team2GameToWin <= team2GamesWon)
+            {
+                team1GameToWin++;
+                team2GameToWin++;
+
+                if (team1GameToWin <= team1GamesWon)
+                    player1.WinGame();
+
+                if (team2GameToWin <= team2GamesWon)
+                    player2.WinGame();
+            }
+
+            Assert.Equal("0 - 0", game.Score.CurrentStatus);
+
+            Assert.Equal(0, game.Score.Team1.CurrentGamePoints);
+            Assert.Equal(0, game.Score.Team2.CurrentGamePoints);
+
+            Assert.Equal(team1GamesWon, game.Score.Team1.GamesWon);
+            Assert.Equal(team2GamesWon, game.Score.Team2.GamesWon);
+
+            Assert.Equal(expectedSetsWonByTeam1, game.Score.Team1.SetsWon > game.Score.Team2.SetsWon);
+
+            if (expectedSetsWonByTeam1)
+                Assert.Equal(1, game.Score.Team1.SetsWon);
+
+            Assert.False(game.Score.Team1.MatchWon);
+            Assert.False(game.Score.Team2.MatchWon);
         }
     }
 }
@@ -391,6 +449,11 @@ public class GameShould
 public class PendingImplementations
 {
 
+    [Fact]
+    public void ReachATieBreakWhenBothPlayersWinSixSets()
+    {
+        Assert.False(true);
+    }
 
     [Fact]
     public void RecordMatchWhenPlayerWinsMatch()
