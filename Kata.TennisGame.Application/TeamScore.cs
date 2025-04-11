@@ -1,5 +1,7 @@
 
 
+
+
 namespace Kata.TennisGame.Application;
 
 public enum TeamId
@@ -18,12 +20,13 @@ public interface IScore
 
 public interface ITeamScore
 {
-    int GamePoints { get; }
+    int CurrentGamePoints { get; }
 
     bool MatchWon { get; }
 
 
-    int Set { get; }
+    int SetWon { get; }
+    int GamesWon { get; }
 }
 
 //revisar el disenio de esto q es horrible
@@ -45,21 +48,21 @@ public class Score : IScore
     public string CurrentStatus => CalculateCurrentStatus();
 
     private string CalculateCurrentStatus()
-    {
-        if (team1.GamePoints >= 3 && team2.GamePoints >= 3 && team1.GamePoints == team2.GamePoints)
+    {//review as :* serving player score is called first, then the non-serving player
+        if (team1.CurrentGamePoints >= 3 && team2.CurrentGamePoints >= 3 && team1.CurrentGamePoints == team2.CurrentGamePoints)
             return "Deuce";
 
-        if (team1.GamePoints > team2.GamePoints && team1.GamePoints >= 3 && team2.GamePoints >= 3)
-            return $"Advantage - {team2.GamePoints}";
+        if (team1.CurrentGamePoints > team2.CurrentGamePoints && team1.CurrentGamePoints >= 3 && team2.CurrentGamePoints >= 3)
+            return $"Advantage - {team2.CurrentGamePoints}";
 
-        if (team1.GamePoints > team2.GamePoints)
-            return $"{team1.GamePoints} - {team2.GamePoints}";
+        if (team1.CurrentGamePoints > team2.CurrentGamePoints)
+            return $"{team1.CurrentGamePoints} - {team2.CurrentGamePoints}";
 
-        if (team2.GamePoints > team1.GamePoints && team2.GamePoints >= 3 && team1.GamePoints >= 3)
-            return $"Advantage - {team1.GamePoints}";
+        if (team2.CurrentGamePoints > team1.CurrentGamePoints && team2.CurrentGamePoints >= 3 && team1.CurrentGamePoints >= 3)
+            return $"Advantage - {team1.CurrentGamePoints}";
 
 
-        return $"{team2.GamePoints} - {team1.GamePoints}";
+        return $"{team2.CurrentGamePoints} - {team1.CurrentGamePoints}";
     }
 
     public void ScorePoint(TeamId teamId)
@@ -77,25 +80,51 @@ public class Score : IScore
             default:
                 break;
         }
+
+
+        if (team1.CurrentGamePoints >= 4 && team1.CurrentGamePoints - team2.CurrentGamePoints >= 2)
+        {
+            //team1 won a game
+            team1.ScoreGame();
+
+            team1.ResetScore();
+            team2.ResetScore();
+        }
+        else if (team2.CurrentGamePoints >= 4 && team2.CurrentGamePoints - team1.CurrentGamePoints >= 2)
+        {
+            //team2 won a game
+            team2.ScoreGame();
+
+            team1.ResetScore();
+            team2.ResetScore();
+        }
+
     }
 
     private class TeamScore : ITeamScore
     {
         public TeamScore()
         {
-            GamePoints = 0;
-            Set = 0;
+            CurrentGamePoints = 0;
+            GamesWon = 0;
+            SetWon = 0;
             MatchWon = false;
         }
 
 
 
-        public int GamePoints { get; private set; }
+        public int CurrentGamePoints { get; private set; }
 
-        public int Set { get; private set; }
+        public int SetWon { get; private set; }
 
         public bool MatchWon { get; private set; }
 
-        internal void ScorePoint() => GamePoints++;
+        public int GamesWon { get; private set; }
+
+        internal void ResetScore() => CurrentGamePoints = 0;
+        internal void ScoreGame() => GamesWon++;
+
+        internal void ScorePoint() => CurrentGamePoints++;
+
     }
 }

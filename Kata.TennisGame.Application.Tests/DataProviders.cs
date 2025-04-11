@@ -2,10 +2,10 @@
 
 
 
-public static class PayerExtensions
+public static class lPayerExtensions
 {
 
-    public static void ReachScore(this IPlayer player, int successfulHitsNeeded)
+    public static void AddPoints(this IPlayer player, int successfulHitsNeeded)
     {
 
         var actualSuccessfulHits = 0;
@@ -21,6 +21,17 @@ public static class PayerExtensions
 
 
     }
+
+    public static void AddPointsTo2PlayersSimoultaneusly(this IPlayer player1, IPlayer player2, int pointsToAdd)
+    {
+
+        for (var i = 0; i < pointsToAdd; i++)
+        {
+            player1.AddPoints(1);
+            player2.AddPoints(1);
+        }
+    }
+
 
 
 }
