@@ -24,11 +24,16 @@ public interface IGame
 
 public class Game : IGame
 {
+    //jp: add a destructor and idisposable to this class so we manage event unsubscription
+
+    private IList<IPlayer> subscribedPlayersEvents;
+
     private Game()
     {
         Status = GameStatus.NotStarted;
         Team1 = Team.CreateEmptyTeam();
         Team2 = Team.CreateEmptyTeam();
+        subscribedPlayersEvents = new List<IPlayer>();
 
         Score = new MatchScore();
     }
@@ -63,29 +68,52 @@ public class Game : IGame
         Team1 = team1;
         Team2 = team2;
 
-
         var xxx = new List<IPlayer> { team1.Player1, team1.Player2 }.Where(x => x is Player);
         SubscribeEventsForTeam(xxx, OnBallHitSuccessfulTeam1);
 
         xxx = new List<IPlayer> { team2.Player1, team2.Player2 }.Where(x => x is Player);
         SubscribeEventsForTeam(xxx, OnBallHitSuccessfulTeam2);
-
     }
-    IReadOnlyCollection<IPlayer> subscribedPlayersEvents;
+
+    public void Finish()
+    {
+        //jp: this is doing crap
+        Cleanup();
+    }
+
+    public void Start()
+    {
+        //jp: this is doing crap
+        Status = GameStatus.Started;
+    }
+
+    private static void ThrowInvalidOperationExceptionWhenOddNumberOfPlayers(ITeam team1, ITeam team2)
+    {
+        var allPlayers = new List<IPlayer> { team1.Player1, team1.Player2, team2.Player1, team2.Player2 };
+
+        var playersCount = allPlayers.Where(x => x is Player == true).Count();
+
+        if (new[] { 0, 1, 3 }.Contains(playersCount))
+            throw new InvalidOperationException($"The total players are invalid as they are odd or none, they should be a pair number of players");
+    }
+
     private void SubscribeEventsForTeam(IEnumerable<IPlayer> players, EventHandler onBallHitSuccessfulTeam)
     {
         foreach (var player in players)
+        {
             player.BallHitSuccessful += onBallHitSuccessfulTeam;
+            subscribedPlayersEvents.Add(player);
+        }
     }
 
     private void OnBallHitSuccessfulTeam1(object? sender, EventArgs e)
     {
         Score.ScorePoint(TeamId.Team1);
     }
+
     private void OnBallHitSuccessfulTeam2(object? sender, EventArgs e)
     {
         Score.ScorePoint(TeamId.Team2);
-
     }
 
     private void Cleanup()
@@ -95,22 +123,5 @@ public class Game : IGame
             player.BallHitSuccessful -= OnBallHitSuccessfulTeam1;
             player.BallHitSuccessful -= OnBallHitSuccessfulTeam2;
         }
-    }
-    public void Finish() { Cleanup(); }
-
-    public void Start()
-    {
-        Status = GameStatus.Started;
-    }
-
-    private static void ThrowInvalidOperationExceptionWhenOddNumberOfPlayers(ITeam team1, ITeam team2)
-
-    {
-        var allPlayers = new List<IPlayer> { team1.Player1, team1.Player2, team2.Player1, team2.Player2 };
-
-        var playersCount = allPlayers.Where(x => x is Player == true).Count();
-
-        if (new[] { 0, 1, 3 }.Contains(playersCount))
-            throw new InvalidOperationException($"The total players are invalid as they are odd or none, they should be a pair number of players");
     }
 }

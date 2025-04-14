@@ -23,8 +23,6 @@ public interface ITeamScore
     int SetsWon { get; }
 
     int GamesWon { get; }
-
-
 }
 
 internal class MatchScoreText
@@ -37,21 +35,31 @@ internal class MatchScoreText
         this.team1 = team1;
         this.team2 = team2;
     }
+
     public string Calculate()
-    {//review as :* serving player score is called first, then the non-serving player
+    {
+        //review as :* serving player score is called first, then the non-serving player
+
+        var tieBreakSuffix = IsItATieBreak() ? "Tie Break" : string.Empty;
+
         if (team1.CurrentGamePoints >= 3 && team2.CurrentGamePoints >= 3 && team1.CurrentGamePoints == team2.CurrentGamePoints)
             return "Deuce";
 
         if (team1.CurrentGamePoints > team2.CurrentGamePoints && team1.CurrentGamePoints >= 3 && team2.CurrentGamePoints >= 3)
-            return $"Advantage - {team2.CurrentGamePoints}";
+            return $"Advantage - {team2.CurrentGamePoints} {tieBreakSuffix}".Trim();
 
         if (team1.CurrentGamePoints > team2.CurrentGamePoints)
-            return $"{team1.CurrentGamePoints} - {team2.CurrentGamePoints}";
+            return $"{team1.CurrentGamePoints} - {team2.CurrentGamePoints} {tieBreakSuffix}".Trim();
 
         if (team2.CurrentGamePoints > team1.CurrentGamePoints && team2.CurrentGamePoints >= 3 && team1.CurrentGamePoints >= 3)
-            return $"Advantage - {team1.CurrentGamePoints}";
+            return $"Advantage - {team1.CurrentGamePoints} {tieBreakSuffix}".Trim();
 
-        return $"{team2.CurrentGamePoints} - {team1.CurrentGamePoints}";
+        return $"{team2.CurrentGamePoints} - {team1.CurrentGamePoints} {tieBreakSuffix}".Trim();
+    }
+
+    private bool IsItATieBreak()
+    {
+        return team1.GamesWon == 6 && team2.GamesWon == 6;
     }
 }
 
@@ -60,7 +68,8 @@ public class MatchScore : IScore
 {
     private readonly TeamScore team1;
     private readonly TeamScore team2;
-    MatchScoreText matchScoreText;
+    private MatchScoreText matchScoreText;
+
     public MatchScore()
     {
         team1 = new TeamScore();
@@ -94,26 +103,31 @@ public class MatchScore : IScore
         UpdateTeamsStanding();
     }
 
+    private bool IsItATieBreak()
+    {
+        return team1.GamesWon == 6 && team2.GamesWon == 6;
+    }
+
     private void UpdateTeamsStanding()
     {
-        if (HastTeamWonAGame(TeamId.Team1))
-            ScoreGameForTeam(TeamId.Team1);
+        var isItATieBreak = IsItATieBreak();
 
-        else if (HastTeamWonAGame(TeamId.Team2))
+        if (HastTeamWonAGame(TeamId.Team1, isItATieBreak))
+            ScoreGameForTeam(TeamId.Team1);
+        else if (HastTeamWonAGame(TeamId.Team2, isItATieBreak))
             ScoreGameForTeam(TeamId.Team2);
 
-
-        if (HasTeamWonASet(TeamId.Team1))
+        if (HasTeamWonASet(TeamId.Team1, isItATieBreak))
             team1.ScoreSet();
-
-        else if (HasTeamWonASet(TeamId.Team2))
+        else if (HasTeamWonASet(TeamId.Team2, isItATieBreak))
             team2.ScoreSet();
     }
 
-    private bool HasTeamWonASet(TeamId teamId)
+    private bool HasTeamWonASet(TeamId teamId, bool isItATieBreak)
     {
-        return teamId == TeamId.Team1 ? team1.GamesWon >= 6 && team1.GamesWon - team2.GamesWon >= 2
-                                      : team2.GamesWon >= 6 && team2.GamesWon - team1.GamesWon >= 2;
+        var requiredGameDifferenceToWin = isItATieBreak ? 1 : 2;
+        return teamId == TeamId.Team1 ? team1.GamesWon >= 6 && team1.GamesWon - team2.GamesWon >= requiredGameDifferenceToWin
+                                      : team2.GamesWon >= 6 && team2.GamesWon - team1.GamesWon >= requiredGameDifferenceToWin;
     }
 
     private void ScoreGameForTeam(TeamId teamId)
@@ -123,15 +137,15 @@ public class MatchScore : IScore
         else
             team2.ScoreGame();
 
-
         team1.ResetScore();
         team2.ResetScore();
     }
 
-    private bool HastTeamWonAGame(TeamId teamId)
+    private bool HastTeamWonAGame(TeamId teamId, bool isItATieBreak)
     {
-        return teamId == TeamId.Team1 ? team1.CurrentGamePoints >= 4 && team1.CurrentGamePoints - team2.CurrentGamePoints >= 2
-                                      : team2.CurrentGamePoints >= 4 && team2.CurrentGamePoints - team1.CurrentGamePoints >= 2;
+        var thresholdPoints = isItATieBreak ? 7 : 4;
+        return teamId == TeamId.Team1 ? team1.CurrentGamePoints >= thresholdPoints && team1.CurrentGamePoints - team2.CurrentGamePoints >= 2
+                                      : team2.CurrentGamePoints >= thresholdPoints && team2.CurrentGamePoints - team1.CurrentGamePoints >= 2;
     }
 
     private class TeamScore : ITeamScore

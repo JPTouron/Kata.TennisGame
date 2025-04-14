@@ -272,7 +272,7 @@ public class GameShould
             var player2 = team2.Player1;
 
             // increase 1 point at a time for both players to prevent any player from winning any games
-            player1.AddPointsTo2PlayersSimoultaneusly(player2, deuceScore);
+            player1.AddPointsTo2PlayersSimultaneusly(player2, deuceScore);
 
             Assert.Equal("Deuce", game.Score.CurrentStatus);
         }
@@ -298,7 +298,7 @@ public class GameShould
             if (winningTeam == 1)
             {
                 // increase 1 point at a time for both players to prevent any player from winning any games
-                player1.AddPointsTo2PlayersSimoultaneusly(player2, 3);
+                player1.AddPointsTo2PlayersSimultaneusly(player2, 3);
                 var deuceStatusHappened = game.Score.CurrentStatus;
 
                 player1.AddPoints(1); //advantage for player
@@ -309,7 +309,7 @@ public class GameShould
             else
             {
                 // increase 1 point at a time for both players to prevent any player from winning any games
-                player1.AddPointsTo2PlayersSimoultaneusly(player2, 6);
+                player1.AddPointsTo2PlayersSimultaneusly(player2, 6);
                 var deuceStatusHappened = game.Score.CurrentStatus;
 
                 player2.AddPoints(1);//advantage for player
@@ -361,7 +361,7 @@ public class GameShould
 
             var deuceScore = 3;
 
-            player1.AddPointsTo2PlayersSimoultaneusly(player2, deuceScore);
+            player1.AddPointsTo2PlayersSimultaneusly(player2, deuceScore);
 
             player1.AddPoints(2);//hits 2 points over the opponent, wins a game, score is reset to 0 - 0
 
@@ -427,8 +427,6 @@ public class GameShould
                     player2.WinGame();
             }
 
-            Assert.Equal("0 - 0", game.Score.CurrentStatus);
-
             Assert.Equal(0, game.Score.Team1.CurrentGamePoints);
             Assert.Equal(0, game.Score.Team2.CurrentGamePoints);
 
@@ -443,12 +441,95 @@ public class GameShould
             Assert.False(game.Score.Team1.MatchWon);
             Assert.False(game.Score.Team2.MatchWon);
         }
+
+        [Theory]
+        [InlineData(1, false)]
+        [InlineData(2, false)]
+        [InlineData(3, false)]
+        [InlineData(4, false)]
+        [InlineData(5, false)]
+        [InlineData(6, true)]
+        public void ReachATieBreakWhenBothPlayersWinSixSets(int gamesToWin, bool shouldBeTieBreak)
+        {
+            var game = Game.CreateGame();
+
+            var team1 = TeamProvider.Singles.CreateValidTeam_1_WithValidPlayer();
+
+            var team2 = TeamProvider.Singles.CreateValidTeam_2_WithValidPlayer();
+
+            game.AddTeams(team1, team2);
+
+            var player1 = team1.Player1;
+            var player2 = team2.Player1;
+
+            player1.WinManyGamesSimultaneously(player2, gamesToWin);
+
+            if (shouldBeTieBreak)
+                Assert.Equal("0 - 0 Tie Break", game.Score.CurrentStatus);
+            else
+                Assert.Equal("0 - 0", game.Score.CurrentStatus);
+
+            Assert.Equal(0, game.Score.Team1.CurrentGamePoints);
+            Assert.Equal(0, game.Score.Team2.CurrentGamePoints);
+
+            Assert.Equal(gamesToWin, game.Score.Team1.GamesWon);
+            Assert.Equal(gamesToWin, game.Score.Team2.GamesWon);
+
+            Assert.False(game.Score.Team1.MatchWon);
+            Assert.False(game.Score.Team2.MatchWon);
+        }
+
+        //* to be won, it requires a player to win at least 7 points and at least 2 points more than opponent
+
+        [Theory]
+        [InlineData(7, 0, true)]
+        [InlineData(6, 4, false)]
+        [InlineData(7, 5, true)]
+        [InlineData(7, 6, false)]
+        [InlineData(8, 6, true)]
+        public void WinATieBreakByHavingATeamWinningAtLeastSevenPointsAndTwoPointsOverTheOpponent(int team1ScoredPoints, int team2ScoredPoints, bool shouldTeam1WinTheTieBreak)
+        {
+            var game = Game.CreateGame();
+
+            var team1 = TeamProvider.Singles.CreateValidTeam_1_WithValidPlayer();
+
+            var team2 = TeamProvider.Singles.CreateValidTeam_2_WithValidPlayer();
+
+            game.AddTeams(team1, team2);
+
+            var player1 = team1.Player1;
+            var player2 = team2.Player1;
+
+            var tieBreakOnGame = 6;
+            player1.WinManyGamesSimultaneously(player2, tieBreakOnGame);
+
+            player1.ScorePointsForTwoPlayersSequentially(player2, team1ScoredPoints, team2ScoredPoints);
+
+            if (shouldTeam1WinTheTieBreak)
+            {
+                Assert.Equal(1, game.Score.Team1.SetsWon);
+                Assert.Equal(0, game.Score.Team1.CurrentGamePoints);
+                Assert.Equal(0, game.Score.Team2.CurrentGamePoints);
+            }
+            else
+            {
+                Assert.Equal(0, game.Score.Team1.SetsWon);
+                Assert.Equal(team1ScoredPoints, game.Score.Team1.CurrentGamePoints);
+                Assert.Equal(team2ScoredPoints, game.Score.Team2.CurrentGamePoints);
+            }
+
+            var expectedGamesWonByTeam1 = shouldTeam1WinTheTieBreak ? tieBreakOnGame + 1 : tieBreakOnGame;
+            Assert.Equal(expectedGamesWonByTeam1, game.Score.Team1.GamesWon); ;
+            Assert.Equal(tieBreakOnGame, game.Score.Team2.GamesWon);
+
+            Assert.False(game.Score.Team1.MatchWon);
+            Assert.False(game.Score.Team2.MatchWon);
+        }
     }
 }
 
 public class PendingImplementations
 {
-
     [Fact]
     public void ReachATieBreakWhenBothPlayersWinSixSets()
     {

@@ -7,8 +7,8 @@ public interface ITeam
     IPlayer Player1 { get; }
 
     IPlayer Player2 { get; }
-
 }
+
 public class NoTeam : ITeam
 {
     public NoTeam()
@@ -25,7 +25,6 @@ public class NoTeam : ITeam
 //pensar un decorador para cambiar lo que seria un single team (solo una prop de player), de un double team (2 props, una agregada por el decorator, pal player 2)
 public class Team : ITeam
 {
-
     private Team(string name, IPlayer player1, IPlayer player2)
     {
         Name = name;

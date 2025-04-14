@@ -2,9 +2,9 @@ namespace Kata.TennisGame.Application;
 
 public interface IPlayer
 {
-    string Name { get; }
-
     event EventHandler? BallHitSuccessful;
+
+    string Name { get; }
 
     bool AttemptHitBall();
 }
@@ -15,9 +15,9 @@ public class NoPlayer : IPlayer
     {
     }
 
-    public string Name => "unknown";
-
     public event EventHandler? BallHitSuccessful;
+
+    public string Name => "unknown";
 
     public bool AttemptHitBall() => false;
 }
