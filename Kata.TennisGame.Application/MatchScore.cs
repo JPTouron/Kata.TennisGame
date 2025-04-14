@@ -1,8 +1,3 @@
-
-
-
-
-
 namespace Kata.TennisGame.Application;
 
 public enum TeamId
@@ -25,30 +20,24 @@ public interface ITeamScore
 
     bool MatchWon { get; }
 
-
     int SetsWon { get; }
+
     int GamesWon { get; }
+
+
 }
 
-//revisar el disenio de esto q es horrible
-public class Score : IScore
+internal class MatchScoreText
 {
-    private readonly TeamScore team1;
-    private readonly TeamScore team2;
+    private readonly ITeamScore team1;
+    private readonly ITeamScore team2;
 
-    public Score()
+    public MatchScoreText(ITeamScore team1, ITeamScore team2)
     {
-        team1 = new TeamScore();
-        team2 = new TeamScore();
+        this.team1 = team1;
+        this.team2 = team2;
     }
-
-    public ITeamScore Team1 => team1;
-
-    public ITeamScore Team2 => team2;
-
-    public string CurrentStatus => CalculateCurrentStatus();
-
-    private string CalculateCurrentStatus()
+    public string Calculate()
     {//review as :* serving player score is called first, then the non-serving player
         if (team1.CurrentGamePoints >= 3 && team2.CurrentGamePoints >= 3 && team1.CurrentGamePoints == team2.CurrentGamePoints)
             return "Deuce";
@@ -62,9 +51,28 @@ public class Score : IScore
         if (team2.CurrentGamePoints > team1.CurrentGamePoints && team2.CurrentGamePoints >= 3 && team1.CurrentGamePoints >= 3)
             return $"Advantage - {team1.CurrentGamePoints}";
 
-
         return $"{team2.CurrentGamePoints} - {team1.CurrentGamePoints}";
     }
+}
+
+//revisar el disenio de esto q es horrible
+public class MatchScore : IScore
+{
+    private readonly TeamScore team1;
+    private readonly TeamScore team2;
+    MatchScoreText matchScoreText;
+    public MatchScore()
+    {
+        team1 = new TeamScore();
+        team2 = new TeamScore();
+        matchScoreText = new MatchScoreText(team1, team2);
+    }
+
+    public ITeamScore Team1 => team1;
+
+    public ITeamScore Team2 => team2;
+
+    public string CurrentStatus => matchScoreText.Calculate();
 
     public void ScorePoint(TeamId teamId)
     {
@@ -83,34 +91,47 @@ public class Score : IScore
                 break;
         }
 
+        UpdateTeamsStanding();
+    }
 
-        if (team1.CurrentGamePoints >= 4 && team1.CurrentGamePoints - team2.CurrentGamePoints >= 2)
-        {
-            //team1 won a game
-            team1.ScoreGame();
+    private void UpdateTeamsStanding()
+    {
+        if (HastTeamWonAGame(TeamId.Team1))
+            ScoreGameForTeam(TeamId.Team1);
 
-            team1.ResetScore();
-            team2.ResetScore();
-        }
-        else if (team2.CurrentGamePoints >= 4 && team2.CurrentGamePoints - team1.CurrentGamePoints >= 2)
-        {
-            //team2 won a game
-            team2.ScoreGame();
+        else if (HastTeamWonAGame(TeamId.Team2))
+            ScoreGameForTeam(TeamId.Team2);
 
-            team1.ResetScore();
-            team2.ResetScore();
-        }
 
-        if (team1.GamesWon >= 6 && team1.GamesWon - team2.GamesWon >= 2)
-        {
+        if (HasTeamWonASet(TeamId.Team1))
             team1.ScoreSet();
 
-        }
-        else if (team2.GamesWon >= 6 && team2.GamesWon - team1.GamesWon >= 2)
-        {
+        else if (HasTeamWonASet(TeamId.Team2))
             team2.ScoreSet();
-        }
+    }
 
+    private bool HasTeamWonASet(TeamId teamId)
+    {
+        return teamId == TeamId.Team1 ? team1.GamesWon >= 6 && team1.GamesWon - team2.GamesWon >= 2
+                                      : team2.GamesWon >= 6 && team2.GamesWon - team1.GamesWon >= 2;
+    }
+
+    private void ScoreGameForTeam(TeamId teamId)
+    {
+        if (teamId == TeamId.Team1)
+            team1.ScoreGame();
+        else
+            team2.ScoreGame();
+
+
+        team1.ResetScore();
+        team2.ResetScore();
+    }
+
+    private bool HastTeamWonAGame(TeamId teamId)
+    {
+        return teamId == TeamId.Team1 ? team1.CurrentGamePoints >= 4 && team1.CurrentGamePoints - team2.CurrentGamePoints >= 2
+                                      : team2.CurrentGamePoints >= 4 && team2.CurrentGamePoints - team1.CurrentGamePoints >= 2;
     }
 
     private class TeamScore : ITeamScore
@@ -123,8 +144,6 @@ public class Score : IScore
             MatchWon = false;
         }
 
-
-
         public int CurrentGamePoints { get; private set; }
 
         public int SetsWon { get; private set; }
@@ -134,6 +153,7 @@ public class Score : IScore
         public int GamesWon { get; private set; }
 
         internal void ResetScore() => CurrentGamePoints = 0;
+
         internal void ScoreGame() => GamesWon++;
 
         internal void ScorePoint() => CurrentGamePoints++;

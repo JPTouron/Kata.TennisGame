@@ -9,7 +9,7 @@ public enum GameStatus
 
 public interface IGame
 {
-    Score Score { get; }
+    MatchScore Score { get; }
 
     GameStatus Status { get; }
 
@@ -30,7 +30,7 @@ public class Game : IGame
         Team1 = Team.CreateEmptyTeam();
         Team2 = Team.CreateEmptyTeam();
 
-        Score = new Score();
+        Score = new MatchScore();
     }
 
     //note: verify what info i should be disclosing of the teams, i don't wanna disclose it all
@@ -38,7 +38,7 @@ public class Game : IGame
 
     public ITeam Team2 { get; private set; }
 
-    public Score Score { get; }
+    public MatchScore Score { get; }
 
     public GameStatus Status { get; private set; }
 
