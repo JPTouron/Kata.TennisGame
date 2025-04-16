@@ -24,9 +24,9 @@ public class GameShould
                 * it is a series of Games -- DONE
                 * a Set is won when one team wins at least 6 Games AND 2 Games more than the opponent, if 6-5 then another Game is played -- DONE
                 * The final score in sets is always read with the winning player's score first, e.g. "6–2, 4–6, 6–0, 7–5"
-                * if a Set reaches a 6-6 Games won by each team then a TieBreak Game is in play
-                * TieBreak:
-                    * to be won, it requires a player to win at least 7 points and at least 2 points more than opponent
+                * if a Set reaches a 6-6 Games won by each team then a TieBreak Game is in play -- DONE
+                * TieBreak: -- DONE
+                    * to be won, it requires a player to win at least 7 points and at least 2 points more than opponent -- DONE
             * Match:
                 * a sequence of sets
                 * it is composed by a best of 5 or 3 sets
